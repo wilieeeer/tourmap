@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>Japan Cycling Tour Map</title>
+
+  <!-- Leaflet -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  ></script>
+
+  <!-- Elevation プラグイン -->
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/leaflet-elevation@0.0.4/dist/leaflet-elevation.min.css"
+  />
+  <script
+    src="https://cdn.jsdelivr.net/npm/leaflet-elevation@0.0.4/dist/leaflet-elevation.min.js"
+  ></script>
+
+  <!-- GPX ローダー -->
+  <script src="https://unpkg.com/leaflet-gpx@1.7.0/leaflet-gpx.min.js"></script>
+
+  <style>
+    body, html { margin: 0; height: 100%; }
+    #map      { height: 60vh; }
+    #profile  { height: 38vh; } /* 残り 2% はマージン */
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div id="profile"></div>
+
+  <script>
+    // 1) 地図を作成
+    const map = L.map("map").setView([36.0, 138.0], 5); // 日本を俯瞰
+    L.tileLayer(
+      "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      { maxZoom: 18, attribution: "&copy; OpenStreetMap contributors" }
+    ).addTo(map);
+
+    // 2) 高低差コントロールを追加
+    const elev = L.control.elevation({
+      theme: "lime-theme",     // 見た目
+      detached: true,          // 分離表示
+      elevationDiv: "#profile" // グラフ描画先
+    }).addTo(map);
+
+    // 3) 読み込みたい GPX ファイルを列挙
+    const gpxFiles = [
+      { file: "data/route_01.gpx", color: "red" },
+      { file: "data/route_02.gpx", color: "blue" }
+    ];
+
+    // 4) 逐次読み込み
+    gpxFiles.forEach(({ file, color }) => {
+      const gpx = new L.GPX(file, {
+        async: true,
+        polyline_options: { color }
+      })
+        .on("loaded", e => {
+          map.fitBounds(e.target.getBounds());
+          elev.addData(e.target.toGeoJSON());
+        })
+        .addTo(map);
+    });
+  </script>
+</body>
+</html>
